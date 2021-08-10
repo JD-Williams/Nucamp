@@ -10,25 +10,59 @@ import random
 # GAMEPLAY CONFIGURATION
 #----------------------------------------
 
+def dictionaryWord():
+  pass
+  # TODO: Write a function that imports a random list of words from an actual dictionary
 
-# Select a random guess word from a list
-def chooseRandomWord():
+
+def speechToText():
+  pass
+  # TODO: Write a function that records audio clip and transcribes words to a list 
+
+
+# Select a random guess word from mode-specific source
+def chooseWordFrom(source):
   """
   Selects a random word from a
   pre-defined list of words
 
   () -> str, set
   """
-  words = [
-    "sandbox",
-    "resurrection",
-    "divergent",
-    "establishment",
-  ]
+  if source == "library":
+    # words = dictionaryWord()  <-- Needs to be implemented in production
+    words = [
+      "sandbox",
+      "resurrection",
+      "divergent",
+      "establishment",
+      "ridiculous",
+      "collection",
+      "experimentation",
+    ]
+  # elif source == "speech":
+    # words = speechToText()  <-- Needs to be implemented in production
+  else:
+    words = [
+      "sandbox",
+      "resurrection",
+      "divergent",
+      "establishment",
+      "ridiculous",
+      "collection",
+      "experimentation",
+    ]
   word = random.choice(words).lower()
   wordChars = set(word)
   print(f"The guess word contains {len(word)} letters.\n")
   return word, wordChars
+
+
+# Check if guess is a single letter
+def isGuessValid(guess):
+  if not(guess.isalpha() and len(guess) == 1):
+    print(f"The selected guess ({guess}) is invalid. Try again.")
+    return False
+  return True
 
 
 # Get guess from user
@@ -40,13 +74,6 @@ def getUserGuess():
   return guess.lower()
 
 
-# Check if `guess` is in `guessWord`
-def isGuessInWord(guess,guessWord):
-  if guessWord.find(guess) != -1:
-    return True
-  return False
-
-
 # Check if user repeated guess
 def isGuessUnique(guess,misses,hits):
   isUnique = not(guess in misses or guess in hits)
@@ -55,20 +82,20 @@ def isGuessUnique(guess,misses,hits):
   return isUnique
 
 
-# Check if guess is a single letter
-def isGuessValid(guess):
-  if not(guess.isalpha() and len(guess) == 1):
-    print(f"The selected guess ({guess}) is invalid. Try again.")
-    return False
-  return True
+# Check if `guess` is in `guessWord`
+def isGuessInWord(guess,guessWord):
+  if guessWord.find(guess) != -1:
+    return True
+  return False
 
 
-def playGame():
+# Traditional gameplay
+def standardGame(wordSource):
   maxAttempts = len(bodyParts) - 1
   attempts = 0
   misses = []
   hits = []
-  guessWord, guessWordChars = chooseRandomWord()
+  guessWord, guessWordChars = chooseWordFrom(wordSource)
   placeholder = ["_" for _ in guessWord]
   while len(misses) < maxAttempts and len(hits) < len(guessWordChars):
     isRepeatedGuess = True
@@ -89,6 +116,16 @@ def playGame():
     print("Congratulations. You won the game!")
   if len(misses) == maxAttempts:
     print("Whomp whomp. You lose! Better luck next time.")
+
+
+# Timed gameplay
+def timedGame():
+  pass
+
+
+# Speech-dependent gameplay
+def speechGame():
+  pass
 
 
 
@@ -113,11 +150,17 @@ def displayPraise():
 
 
 def displayTaunt():
-  taunt = ["Tough luck.","You can do better.","You're joking, right?!"]
+  taunt = ["Tough luck.","You can do better.","You're joking, right?!","Aww... so close."]
   return random.choice(taunt)
 
 
 def displayPlaceholder(guessWord,guess,arr):
+  """
+  Replaces underscores in `guessWord` placeholder
+  with a correct `guess` in all occurences
+
+  (str,char,list) -> list
+  """
   for idx in range(len(guessWord)):
     if guess == guessWord[idx]:
       arr[idx] = guess.upper()
@@ -157,19 +200,133 @@ rf"""
   )
 
 
+
 #----------------------------------------
-# APPLICATION FUNCTIONS
+# APPLICATION CONFIGURATIONS
 #----------------------------------------
+
+# Create a new game instance (Menu Option = 1)
 def newGame():
-  print("This will begin a new game")
-  # TODO: Write function for a new game instance
+  """
+  Creates a new instance of a game
+  for a user-specified game mode
+  """
+  mode = getGameMode(gameModes)
+  wordSource = gameModes[mode]['source'] 
+  print()
+  gameModes[mode]['action'](wordSource)
 
+
+# Display rules for selected game mode (Menu Option = 2)
 def displayRules():
-  print("This will display the rules")
-  # TODO: Write function to display game rules
+  """
+  Displays the rules for a game
+  user-specified game mode
+  """
+  mode = getGameMode(gameModes)
+  print(rf"""
+/*======= 
+| RULES |
+=======*/
 
+Game Mode: 
+<< {gameModes[mode]['name'].title()} >>
+
+Objective: 
+{gameModes[mode]['objective']}
+
+Gameplay:
+The mystery word is depicted by a row of dashes, representing each letter of the word.
+Guess a letter that occurs in the mystery word. If it is correct, all occurences will
+be displayed. If it is incorrect, a body part will appear in the diagram. The game is
+won by guessing all correct letters in the mystery word before the diagram is complete.
+
+Constraints:
+{gameModes[mode]['constraints']}
+  """)
+
+
+# Exit the application (Menu Option = 3)
 def exitApp():
   print("We hope you enjoyed this app. Have a great day!")
+
+
+# Title screen to be dsiplay when app initializes
+def displayTitleScreen(bodyParts):
+  print(rf"""
+/*=======================*\
+|  HANGMAN         {bodyParts[6][0]}  |
+|  for the CLI     {bodyParts[6][1]}  |
+|                  {bodyParts[6][2]}  |
+|  Made by:        {bodyParts[6][3]}  |
+|  J.D.            {bodyParts[6][4]}  |
+\*=======================*/
+  """)
+
+
+menuOptions = {
+  '1': {
+    'name':"Start a New Game",
+    'action': newGame,
+    },
+  '2': {
+    'name':"Display the Rules",
+    'action': displayRules,
+    },
+  '3': {
+    'name':"Exit the Application",
+    'action': exitApp
+    },
+}
+def getMenuSelection(menuOptions):
+  displayOptions(menuOptions)
+  selection = getUserSelection(menuOptions)
+  print()
+  print(f"You have chosen to `{menuOptions[selection]['name']}`")
+  return selection
+
+
+# TODO: Refactor `gameModes` dictionary into objects of a 'Mode' class
+gameModes = {
+  '1': {
+    'name':"standard",
+    'action':standardGame,
+    'objective':"Determine the mystery word before the maximum number of guesses are exhausted.",
+    'source': "library",
+    'constraints': None,
+  },
+  '2': {
+    'name':"just in time",
+    'action': timedGame,
+    'objective':"Determine the mystery word before the time limit expires.",
+    'source':"library",
+    'constraints': None,
+  },
+  '3': {
+    'name':"listen up!",
+    'action':speechGame,
+    'objective':"Determine a mystery word that is randomly recorded from a clip of the user's speech.",
+    'source':"speech",
+    'constraints': None,
+  },
+}
+def getGameMode(gameModes):
+  print(r"""
+/*====================
+| HANGMAN GAME MODES |
+====================*/
+  """)
+  displayOptions(gameModes)
+  mode = getUserSelection(gameModes)
+  print()
+  print(f"You have selected the `{gameModes[mode]['name'].title()}` game mode.")
+  return mode
+
+
+
+#----------------------------------------
+# HELPER FUNCTIONS
+#----------------------------------------
 
 def isOptionValid(choice, options):
   """
@@ -205,46 +362,36 @@ def getUserSelection(options):
   """
   valid_choice = False
   while(not valid_choice):
-    selection = input("Select one of the menu options above: ")
+    selection = input("Select one of the options above: ")
     valid_choice = isOptionValid(selection, options)
   return selection
 
 
+# Display Corpse
+def displayCorpse():
+  print(rf"""
+      _____[]
+      I    ||
+      I    ||
+    \ O /  ||
+    \|/   ||
+      |    ||
+    / \   ||
+    /   \  ||
+          ||
+          ||
+  [========[]
+  """)
+
+
+#----------------------------------------
+# MAIN APPLICATION
+#----------------------------------------
+
 def hangman():
-  menuOptions = {
-  '1': {
-    'name':"Start a New Game",
-    'action': playGame,
-    },
-  '2': {
-    'name':"Display the Rules",
-    'action': displayRules,
-    },
-  '3': {
-    'name':"Exit the Application",
-    'action': exitApp
-    },
-  }
-  displayOptions(menuOptions)
-  user_choice = getUserSelection(menuOptions)
+  displayTitleScreen(bodyParts)
+  menuSelection = getMenuSelection(menuOptions)
   print()
-  print(f"You have chosen to `{menuOptions[user_choice]['name']}`")
-  menuOptions[user_choice]['action']()
+  menuOptions[menuSelection]['action']()
 
 hangman()
-
-
-# CORPSE
-rf"""
-    _____[]
-    I    ||
-    I    ||
-  \ O /  ||
-   \|/   ||
-    |    ||
-   / \   ||
-  /   \  ||
-         ||
-         ||
-[========[]
-"""
