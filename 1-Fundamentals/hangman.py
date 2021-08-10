@@ -57,20 +57,20 @@ def chooseWordFrom(source):
   return word, wordChars
 
 
-# Check if guess is a single letter
-def isGuessValid(guess):
-  if not(guess.isalpha() and len(guess) == 1):
+# Check if guess is a single letter or length of `guessWord`
+def isGuessValid(guess,guessWord):
+  if not(guess.isalpha() and (len(guess) == 1 or len(guess) == len(guessWord))):
     print(f"The selected guess ({guess}) is invalid. Try again.")
     return False
   return True
 
 
 # Get guess from user
-def getUserGuess():
+def getUserGuess(guessWord):
   valid_guess = False
   while(not valid_guess):
-    guess = input("Enter a single letter that is in the guess word: ")
-    valid_guess = isGuessValid(guess)
+    guess = input("Enter a single letter that is in the guess word, or the entire word itself: ")
+    valid_guess = isGuessValid(guess,guessWord)
   return guess.lower()
 
 
@@ -89,21 +89,32 @@ def isGuessInWord(guess,guessWord):
   return False
 
 
+# Check if `guess` is equal to `guessWord`
+def isGuessWord(guess,guessWord):
+  if guess == guessWord:
+    return True
+  return False
+
+
 # Traditional gameplay
 def standardGame(wordSource):
+  guessWord, guessWordChars = chooseWordFrom(wordSource)
+  placeholder = ["_" for _ in guessWord]
   maxAttempts = len(bodyParts) - 1
   attempts = 0
   misses = []
   hits = []
-  guessWord, guessWordChars = chooseWordFrom(wordSource)
-  placeholder = ["_" for _ in guessWord]
   while len(misses) < maxAttempts and len(hits) < len(guessWordChars):
     isRepeatedGuess = True
     while isRepeatedGuess:
-      guess = getUserGuess()
+      guess = getUserGuess(guessWord)
       isRepeatedGuess = not isGuessUnique(guess,misses,hits)
-    if isGuessInWord(guess,guessWord):
+    if len(guess) == 1 and isGuessInWord(guess,guessWord):  # <- Action if user guesses correct letter
       hits.append(guess)
+      print(displayPraise())
+    elif len(guess) == len(guessWord) and isGuessWord(guess,guessWord):  # <- Action is user guesses correct word
+      hits.clear()
+      hits.extend(set([char for char in guess]))
       print(displayPraise())
     else:
       misses.append(guess)
@@ -162,8 +173,10 @@ def displayPlaceholder(guessWord,guess,arr):
   (str,char,list) -> list
   """
   for idx in range(len(guessWord)):
-    if guess == guessWord[idx]:
+    if len(guess) == 1 and guess == guessWord[idx]:
       arr[idx] = guess.upper()
+    if guess == guessWord:
+      arr = [char.upper() for char in guess]
   return arr
 
 
@@ -293,6 +306,7 @@ gameModes = {
     'action':standardGame,
     'objective':"Determine the mystery word before the maximum number of guesses are exhausted.",
     'source': "library",
+    'hasTimer': False,
     'constraints': None,
   },
   '2': {
@@ -300,6 +314,7 @@ gameModes = {
     'action': timedGame,
     'objective':"Determine the mystery word before the time limit expires.",
     'source':"library",
+    'hasTimer': True,
     'constraints': None,
   },
   '3': {
@@ -307,6 +322,7 @@ gameModes = {
     'action':speechGame,
     'objective':"Determine a mystery word that is randomly recorded from a clip of the user's speech.",
     'source':"speech",
+    'hasTimer': False,
     'constraints': None,
   },
 }
