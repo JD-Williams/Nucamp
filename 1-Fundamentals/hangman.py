@@ -1,5 +1,5 @@
 import random
-# import os, platform
+import time
 # import speech_recognition as sr
 # import pyttsx3
 
@@ -21,23 +21,20 @@ def speechToText():
 
 
 # Select a random guess word from mode-specific source
-def chooseWordFrom(source):
+def chooseWordFrom(source=None):
   """
-  Selects a random word from a
-  pre-defined list of words
+  Selects a random word from a specified source, and
+  returns the word, its length, and an array of
+  underscores whose length is equal to length of word
 
-  () -> str, set
+  () -> str, set, list
   """
   if source == "library":
     # words = dictionaryWord()  <-- Needs to be implemented in production
     words = [
-      "sandbox",
-      "resurrection",
-      "divergent",
-      "establishment",
-      "ridiculous",
-      "collection",
-      "experimentation",
+      "exclusion",
+      "inaction",
+      "marginalized",
     ]
   # elif source == "speech":
     # words = speechToText()  <-- Needs to be implemented in production
@@ -53,8 +50,9 @@ def chooseWordFrom(source):
     ]
   word = random.choice(words).lower()
   wordChars = set(word)
+  blanks = ["_" for _ in word]
   print(f"The guess word contains {len(word)} letters.\n")
-  return word, wordChars
+  return word, wordChars, blanks
 
 
 # Check if guess is a single letter or length of `guessWord`
@@ -96,14 +94,11 @@ def isGuessWord(guess,guessWord):
   return False
 
 
-# Traditional gameplay
-def standardGame(wordSource):
-  guessWord, guessWordChars = chooseWordFrom(wordSource)
-  placeholder = ["_" for _ in guessWord]
-  maxAttempts = len(bodyParts) - 1
+# Start instantance of a game with specified mode parameters
+def startGame(source=None, hasTimer=False, maxAttempts=6, **kwargs):
+  guessWord, guessWordChars, placeholder = chooseWordFrom(source)
   attempts = 0
-  misses = []
-  hits = []
+  misses, hits = [], []
   while len(misses) < maxAttempts and len(hits) < len(guessWordChars):
     isRepeatedGuess = True
     while isRepeatedGuess:
@@ -127,16 +122,6 @@ def standardGame(wordSource):
     print("Congratulations. You won the game!")
   if len(misses) == maxAttempts:
     print("Whomp whomp. You lose! Better luck next time.")
-
-
-# Timed gameplay
-def timedGame():
-  pass
-
-
-# Speech-dependent gameplay
-def speechGame():
-  pass
 
 
 
@@ -225,9 +210,9 @@ def newGame():
   for a user-specified game mode
   """
   mode = getGameMode(gameModes)
-  wordSource = gameModes[mode]['source'] 
+  params = gameModes[mode]['parameters'] 
   print()
-  gameModes[mode]['action'](wordSource)
+  startGame(params)
 
 
 # Display rules for selected game mode (Menu Option = 2)
@@ -255,7 +240,7 @@ be displayed. If it is incorrect, a body part will appear in the diagram. The ga
 won by guessing all correct letters in the mystery word before the diagram is complete.
 
 Constraints:
-{gameModes[mode]['constraints']}
+{gameModes[mode]['parameters']}
   """)
 
 
@@ -303,27 +288,24 @@ def getMenuSelection(menuOptions):
 gameModes = {
   '1': {
     'name':"standard",
-    'action':standardGame,
     'objective':"Determine the mystery word before the maximum number of guesses are exhausted.",
-    'source': "library",
-    'hasTimer': False,
-    'constraints': None,
+    'parameters': {
+      'source': "library",'hasTimer': False,'maxAttempts':6
+      },
   },
   '2': {
     'name':"just in time",
-    'action': timedGame,
     'objective':"Determine the mystery word before the time limit expires.",
-    'source':"library",
-    'hasTimer': True,
-    'constraints': None,
+    'parameters': {
+      'source': "library",'hasTimer': True,'maxAttempts':6
+      },
   },
   '3': {
     'name':"listen up!",
-    'action':speechGame,
     'objective':"Determine a mystery word that is randomly recorded from a clip of the user's speech.",
-    'source':"speech",
-    'hasTimer': False,
-    'constraints': None,
+    'parameters': {
+      'source': "speech",'hasTimer': False,'maxAttempts':6
+      },
   },
 }
 def getGameMode(gameModes):
