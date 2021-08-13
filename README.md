@@ -1,23 +1,42 @@
-<p align="center">
-<img src="https://user-images.githubusercontent.com/16259998/129334740-4264c2fd-56fc-40fc-9ce7-998b43658f34.jpg" width="30%" height="30%">
-</p>
-<br>
-<p align="center">This is a repository for the assignments, projects, and experimentation that pertain to the <a href="https://www.nucamp.co/bootcamp-overview/back-end-sql-devops-python">Python Developer bootcamp</a> via Nucamp.<p>
+<!-- HEADER -->
+<div align="center">
+  <p>
+    <img src="nucamp_logo.jpg" width="30%" height="30%">
+  </p>
+  <br>
+  <p>This is a repository for the assignments, projects, and experimentation that pertain to the <a href="https://www.nucamp.co/bootcamp-overview/back-end-sql-devops-python" target="_blank">Python Developer bootcamp</a> via Nucamp.<p>
+</div>
 <hr>
+<!-- /HEADER -->
+<!-- MAIN -->
 <h2>Assignments</h2>
 <br>
 <h2>Projects</h2>
 <br>
 <hr>
+<!-- /MAIN -->
+<!-- FOOTER -->
 <div align="center">
-<p>Feel free to contact me if you have any questions, comments, concerns, or complaints.</p>
-  
-[![Email Badge](https://img.shields.io/badge/Email-%230078D4.svg?&style=for-the-badge&logo=microsoftoutlook&logoColor=white&labelColor=000000&color=6495ED&link=mailto:jdwill917@live.com)](mailto:jdwill917@live.com)
-[![Instagram Badge](https://img.shields.io/badge/Instagram-%23E4405F.svg?&style=for-the-badge&logo=instagram&logoColor=white&labelColor=000000&color=6495ED&link=https://www.instagram.com/jdthedev)](https://www.instagram.com/jdthedev)
-[![Twitter Badge](https://img.shields.io/badge/Twitter-%231877F2.svg?&style=for-the-badge&logo=twitter&logoColor=white&labelColor=000000&color=6495ED&link=https://twitter.com/jd_the_dev)](https://twitter.com/jd_the_dev)
-
-<br>
+  <p>Feel free to contact me if you have any questions, comments, or concerns.</p>
+  <span>
+    <a href="mailto:jdwill917@live.com">
+      <img src="https://img.shields.io/badge/Email-%230078D4.svg?&style=for-the-badge&logo=microsoftoutlook&logoColor=white&labelColor=000000&color=6495ED&link=mailto:jdwill917@live.com">
+    </a>
+  </span>
+  <span>
+    <a href="https://www.instagram.com/jdthedev" target="_blank">
+      <img src="https://img.shields.io/badge/Instagram-%23E4405F.svg?&style=for-the-badge&logo=instagram&logoColor=white&labelColor=000000&color=6495ED&link=https://www.instagram.com/jdthedev">
+    </a>
+  </span> 
+  <span>
+    <a href="https://twitter.com/jd_the_dev" target="_blank">
+      <img src="https://img.shields.io/badge/Twitter-%231877F2.svg?&style=for-the-badge&logo=twitter&logoColor=white&labelColor=000000&color=6495ED&link=https://twitter.com/jd_the_dev">
+    </a>
+  </span>
+  <br>
+  <br>
   <blockquote>
     Be not simply good; be good for something. -Henry David Thoreau, <em>Letters to H.G.O. Blake</em>
   </blockquote>
 </div>
+<!-- /FOOTER -->
