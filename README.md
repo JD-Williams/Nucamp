@@ -10,6 +10,14 @@
 <!-- /HEADER -->
 <!-- MAIN -->
 <h2>Assignments</h2>
+<ul>
+  <li>
+    <p>Week 01: <a href="./1-Fundamentals/assignments/wk01" target="_blank">Fantasy Battle Game</a></p>
+  </li>
+  <li>
+    <p>Week 02: <a href="./1-Fundamentals/assignments/wk02" target="_blank">ATM Application</a></p>
+  </li>
+</ul>
 <br>
 <h2>Projects</h2>
 <br>
