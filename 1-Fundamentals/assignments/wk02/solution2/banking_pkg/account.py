@@ -32,7 +32,8 @@ class Customer:
 
     def deposit(self):
         is_valid = False
-        while not is_valid:
+        err_count = 0
+        while not is_valid and err_count < 3:
             amount = input("Enter a whole dollar amount to deposit: ")
             if self.is_amount_valid(amount):
                 self.balance += float(amount)
@@ -40,11 +41,13 @@ class Customer:
                 self.show_balance()
             else:
                 print("The deposit amount is invalid. Please try again.")
+                err_count += 1
         return self
 
     def withdraw(self):
         is_valid = False
-        while not is_valid:
+        err_count = 0
+        while not is_valid and err_count < 3:
             amount = input("Enter a whole dollar amount to withdraw: ")
             if self.is_amount_valid(amount, self.balance):  # <-- Bonus Task 3
                 self.balance -= float(amount)
@@ -52,6 +55,7 @@ class Customer:
                 self.show_balance()
             else:
                 print(fill(f"The requested withdrawl amount must be a positive value that does not exceed your current balance (${self.balance:.2f})."))
+                err_count += 1
         return self
 
     def logout(self):
