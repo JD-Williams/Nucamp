@@ -1,6 +1,13 @@
+# An Automated Teller Machine made with Python
+#
+# This demo script simulates a user interface for an ATM,
+# and allows a user who is logged in to perform standard
+# actions on his/her account.
+#
+
 import sys
 from textwrap import fill
-from banking_pkg.account import User  # <-- Task 4
+from banking_pkg.account import Customer  # <-- Task 4
 
 
 #========================= 
@@ -30,20 +37,19 @@ def create_pin(username):
     print()
     return pin
 
-def user_exists(users, username, pin):
-    for user in users:
-        if user.username == username and user.pin == pin:
+def customer_exists(username, pin):
+    for customer in Customer.customers:
+        if customer.username == username and customer.pin == pin:
             return True
     return False
 
-def register(users):  # <-- Main Menu: New Registration (Option 1)
+def register():  # <-- Main Menu: New Registration (Option 1)
     while True:
         new_username = create_username()
         new_pin = create_pin(new_username)
-        if not user_exists(users, new_username, new_pin):
-            new_user = User(new_username,new_pin)
-            users.append(new_user)
-            print(f"{new_user.username} has been registered with a starting balance of ${new_user.balance:.2f}.")
+        if not customer_exists(new_username, new_pin):
+            new_customer = Customer(new_username, new_pin)
+            print(f"{new_customer.username} has been registered with a starting balance of ${new_customer.balance:.2f}.")
             return None
         else:
             print("A user with these credentials already exists in the system.")
@@ -71,17 +77,17 @@ def get_pin():
     pin = input("Enter PIN: ")
     return pin
 
-def login(users):  # <-- Main Menu: User Login (Option 2)
+def login():  # <-- Main Menu: User Login (Option 2)
     max_errors = 3
     errors = 0
     while True:
         print("user login".upper())
         u = get_username()
         p = get_pin()
-        for user in users:
-            if user.username == u and user.pin == p:
+        for customer in Customer.customers:
+            if customer.username == u and customer.pin == p:
                 print("Login successful!\n")
-                return user
+                return customer
         print("Invalid credentials!\n")
         errors += 1
         if errors >= max_errors:
@@ -116,10 +122,10 @@ def get_option(obj_dict):
         else:
             return option
 
-def show_menu(menu_dict,user_obj=None):
+def show_menu(menu_dict, user_obj=None):
     """
     Displays formatted options for each item in `menu_dict`.
-    A custom username is shown if `userObj != None`.
+    A custom username is shown if `user_obj != None`.
     """
     header_length = 50
     print()
@@ -134,7 +140,6 @@ def show_menu(menu_dict,user_obj=None):
         print(f"{'-'*(header_length)}".center(header_length))
 
 def atm():
-    users = []
     active_user = None
     while not active_user:
         main_menu = {
@@ -142,14 +147,14 @@ def atm():
             '2':{'label':"User Login",'action':login},
             '3':{'label':"Exit Application",'action':exit_app},
         }
-        show_menu(main_menu,active_user)
+        show_menu(main_menu, active_user)
         m_option = get_option(main_menu)
-        if not users and m_option == "2":  # <-- prevents `login` action if no users are registered
+        if not Customer.customers and m_option == "2":  # <-- prevents `login` action if no users are registered
             print()
             print(fill("Currently there are no users enrolled in the system. Please `Register` or `Exit` the application.\n"))
         else:
             print(f"You have selected `{main_menu[m_option]['label']}`\n")
-            active_user = main_menu[m_option]['action'](users)  # <-- callback function from `main_menu`
+            active_user = main_menu[m_option]['action']()  # <-- callback function from `main_menu`
             print()
             while active_user:  # <-- will execute only when a user is logged in
                 user_menu = {
@@ -158,9 +163,15 @@ def atm():
                     '3':{'label':"Withdraw Funds", 'action':active_user.withdraw},
                     '4':{'label':"Logout", 'action':active_user.logout},
                 }
-                show_menu(user_menu,active_user)
+                show_menu(user_menu, active_user)
                 u_option = get_option(user_menu)
-                print(f"You have chosen to `{user_menu[u_option]['label']}`\n")
-                active_user = user_menu[u_option]['action']()  # <-- calls the selected `User` object method
+                if active_user.balance <= 0 and u_option == "3":  # <-- prevents withdrawal from nil balance
+                    print()
+                    print(fill("You have insufficent funds to make any withdrawl. Please select another option."))
+                else:
+                    print(f"You have selected `{user_menu[u_option]['label']}`\n")
+                    active_user = user_menu[u_option]['action']()  # <-- calls the selected `Customer` object method
 
-atm()
+
+if __name__ == '__main__':
+    atm()

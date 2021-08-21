@@ -4,24 +4,28 @@ from textwrap import fill
 #========================= 
 # TASK 4
 #=========================
-class User:
+class Customer:
+
+    customers = []
+
     def __init__(self, username, pin, balance:int=0):
         self.username = username
         self.pin = pin
         self.balance = balance
+        Customer.customers.append(self)
 
     def __str__(self):
-        return self.username
+        return f"<Customer `{self.username}` (Balance: ${self.balance:.2f})>"
 
     def __repr__(self):
-        return f"<User `{self.username}` (Balance: {self.balance:.2f})>"
+        return f"Customer(username='{self.username}', pin='{self.pin}')"
 
     def show_balance(self):
         print(f"Current Balance: ${self.balance:.2f}")
         return self
 
     @staticmethod
-    def is_amount_valid(amount,max_amount=None):
+    def is_amount_valid(amount, max_amount=None):
         if max_amount == None:
             return amount.isdigit() and 0.00 < float(amount)
         return amount.isdigit() and 0.00 < float(amount) < max_amount
