@@ -25,6 +25,17 @@
       <p>I followed the directives precisely as they were provided. Nothing more, nothing less.</p>
     </div>
   </li>
+  <li>
+    <div>
+      <h3><a href="./solution2/app.py">Solution #2</a></h3>
+      <p>The four user transaction functions in <code>account.py</code> were refactored as object methods for a class called <code>Customer</code>. Additional features were added to improve both validation of user input and overall functionality.</p>
+      <ul>
+        <li>The application prevents a user from logging in if there are no registered customers</li>
+        <li>The application prohibits the registration of duplicate customers</li>
+        <li>A logged in customer is unable to make a withdrawl with a zero balance</li>
+      </ul>
+    </div>
+  </li>
 </ul>
 <br>
 <hr>
