@@ -28,7 +28,7 @@ class Customer:
     def is_amount_valid(amount, max_amount=None):
         if max_amount == None:
             return amount.isdigit() and 0.00 < float(amount)
-        return amount.isdigit() and 0.00 < float(amount) < max_amount
+        return amount.isdigit() and 0.00 < float(amount) <= max_amount
 
     def deposit(self):
         is_valid = False
