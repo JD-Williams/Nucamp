@@ -29,7 +29,7 @@ def donation_app():
                 'label':"Make Donation", 'action':authorized_user.donate if authorized_user else None,
                 'login_required':True, 'admin_required':False},
             '5':{
-                'label':"My Donations", 'action':authorized_user.my_donations if authorized_user else None, 
+                'label':"View My Donations", 'action':authorized_user.my_donations if authorized_user else None, 
                 'login_required':True, 'admin_required':False},
             '6':{
                 'label':"Logout", 'action':logout, 

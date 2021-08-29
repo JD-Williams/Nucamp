@@ -2,10 +2,10 @@
 # TASK 2
 #=========================
 def show_homepage():
-    header_length = 30
+    header_length = 50
     print()
     print(f" {'DonateMe Homepage'} ".center(header_length, '='))
-    menu_options = ["Login","Register","Donate","Show Donations","Exit"]
+    menu_options = ["Login","Register","Donate","Show All Donations","Exit"]
     for idx, option in enumerate(menu_options):
         print(f"{'-'*(header_length)}".center(header_length))
         print(f"| {idx+1}.  {option.center(header_length-12)}     |")

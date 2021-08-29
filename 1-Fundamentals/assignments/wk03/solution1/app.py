@@ -1,3 +1,9 @@
+# A Backend Application for Collecting Donations made with Python
+#
+# This demo script simulates a text-based, fictional donations
+# website called `DonateMe`.
+#
+
 import sys
 from donations_pkg.homepage import show_homepage, donate, show_donations
 from donations_pkg.user import login, register

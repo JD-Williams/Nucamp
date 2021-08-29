@@ -22,20 +22,64 @@
   <li>
     <div>
       <h3><a href="./solution1/app.py">Solution #1</a></h3>
-      <p>I followed the directives precisely as they were provided. Nothing more, nothing less.</p>
+      <p>I followed the directives precisely as they were provided. All base and bonus tasks are satisfied.</p>
     </div>
   </li>
-  <!-- <li>
+  <li>
     <div>
       <h3><a href="./solution2/app.py">Solution #2</a></h3>
-      <p>The four user transaction functions in <code>account.py</code> were refactored as object methods for a class called <code>Customer</code>. Additional features were added to improve both validation of user input and overall functionality.</p>
+      <p>The code was refactored to utilize the benefits of custom classes and inheritance. Three classes were defined in <code>user.py</code> to represent the main objects that exist within this application:<p>
       <ul>
-        <li>The application prevents a user from logging in if there are no registered customers</li>
-        <li>The application prohibits the registration of duplicate customers</li>
-        <li>A logged in customer is unable to make a withdrawl with a zero balance</li>
+        <li>
+          <p><code>User</code>: a superclass that represents a standard user of the application</p>
+        </li>
+        <li>
+          <p><code>Admin</code>: a subclass of <code>User</code> with additional administrative privileges</p>
+        </li>
+        <li>
+          <p><code>Donation</code>: a representation of a donation made by any type of user</p>
+        </li>
       </ul>
+      <p>Some of the original application functions were converted into either instance methods (e.g. <code>donate</code>) or class methods (e.g. <code>show_donations</code>). Additional improvements were made to both aesthetics and functionality, and several features were included.</p>
+      <ol>
+        <li>
+          <p>Only standard main menu options&mdash;<em>Login</em>, <em>Register</em>, <em>Show All Donations</em>, and <em>Exit</em>&mdash;are displayed if a user is not logged in.
+          <ul>
+            <li>a logged in <code>User</code> has all standard options and also <em>Make Donation</em>, <em>View My Donations</em>, and <em>Logout</em></li>
+            <li>a logged in <code>Admin</code> has all <code>User</code> options and also <em>Administrative Settings</em></li>
+          </ul></p>
+        </li>
+        <li>
+          <div>
+            <p><em>Show All Donations</em> : If a user is logged in, the username is replaced with the prounoun "you" for any self-made donations. Also, a timestamp for when a donation was made is displayed for all records.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <p><em>View My Donations</em> : A list of donations made solely by the logged in user is displayed.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <p><em>Logout</em> : Logs a user out of the current session, and displays the main menu with standard options only.</p>
+          </div>
+        </li>
+        <li>
+          <div>
+            <p><em>Administrative Settings</em></p>
+            <ul>
+              <li>
+                <p><em>Change User Password</em> : Allows an <code>Admin</code> to change the password for any registered user.</p>
+              </li>
+              <li>
+                <p><em>Change User Privileges</em> : Allows an <code>Admin</code> to promote a standard user to an administrator, or demote an administrator to a standard user. The program will prevent an administrator from being demoted if there is only one registered administrator in the database.</p>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ol>
     </div>
-  </li> -->
+  </li>
 </ul>
 <br>
 <hr>
