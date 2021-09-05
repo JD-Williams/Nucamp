@@ -21,7 +21,7 @@
 <ul>
   <li>
     <div>
-      <h3><a href="./solution1/app.py">Solution #1</a></h3>
+      <h3><a href="./solution1/banking.py">Solution #1</a></h3>
       <p>I followed the directives precisely as they were provided. All base and bonus tasks are satisfied.</p>
     </div>
   </li>
