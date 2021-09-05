@@ -20,6 +20,9 @@
   <li>
     <p>Week 03: <a href="./1-Fundamentals/assignments/wk03" target="_blank">Text-Based Donations Website</a></p>
   </li>
+  <li>
+    <p>Week 04: <a href="./1-Fundamentals/assignments/wk04" target="_blank">OOP Banking App</a></p>
+  </li>
 </ul>
 <br>
 <h2>Projects</h2>
