@@ -1,8 +1,8 @@
 <!-- HEADER -->
 <div align="center">
-  <h1>Week 04: Workshop Assignment - OOP Banking App</h1>
+  <h1>Week 05: Workshop Assignment - Number Guessing Game</h1>
   <p>
-    <img style="border: 2px solid white" src="transfer.gif" alt="animated GIF of Ned Flanders from 'The Simpsons' giving Marge Simpson money">
+    <img style="border: 2px solid white" src="thinking.gif" alt="animated GIF of Bart from 'The Simpsons' thinking">
   </p>
   <br>
 </div>
@@ -11,8 +11,8 @@
 <div align="center">
   <h2>The Instructions</h2>
   <p> 
-    <a href="https://www.youtube.com/embed/3ktB48wZwu8" target="_blank">
-      <img src="https://i.ytimg.com/vi/3ktB48wZwu8/hqdefault.jpg">
+    <a href="https://www.youtube.com/embed/d6RY5USXJEY" target="_blank">
+      <img src="https://i.ytimg.com/vi/d6RY5USXJEY/hqdefault.jpg">
     </a>
   </p>
 </div>
@@ -21,7 +21,7 @@
 <ul>
   <li>
     <div>
-      <h3><a href="./solution1/banking.py">Solution #1</a></h3>
+      <h3><a href="./solution1/guessing_game.py">Solution #1</a></h3>
       <p>I followed the directives precisely as they were provided. All base and bonus tasks are satisfied.</p>
     </div>
   </li>
