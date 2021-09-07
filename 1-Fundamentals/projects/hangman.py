@@ -3,8 +3,8 @@ import sys
 from textwrap import fill, wrap
 import time
 import copy
-# import speech_recognition as sr
-# import pyttsx3
+import speech_recognition as sr  # <- converts speech to text
+import pyttsx3  # <- convert
 
 
 #========================================
@@ -135,22 +135,74 @@ class Mode:
     return f"Mode(name='{self.name}', label='{self.label}')"
 
   @staticmethod
-  def from_dictionary():
+  def get_from_dictionary():
     pass
     # TODO: Write a function that imports a random list of words from an actual dictionary module
 
   @staticmethod
-  def from_speech():
-    pass
-    # TODO: Write a function that records audio clip and transcribes words to a list
+  def eavesdrop():
+    """
+    This function will transcribe speech recorded from the
+    user's voice and return a dictionary with data from
+    this operation: word array and errors (if applicable)
+
+    () -> dict
+    """
+    MIN_WORD_LENGTH = 7
+    r = sr.Recognizer()
+    mic = sr.Microphone()
+
+    with mic as source:  # <-- record audio from microphone
+      r.adjust_for_ambient_noise(source, 2)
+      audio = r.listen(source)
+
+    outcome = {  # <-- response object
+      'words': None,
+      'successful': True,
+      'error': None,
+    }
+
+    try:  # <-- recognize speech w/ Google Speech Recognition
+      raw_word_list = r.recognize_google(audio).lower().split(" ")
+      outcome['words'] = list(filter(lambda word: len(word) >= MIN_WORD_LENGTH, raw_word_list))
+    except sr.UnknownValueError:
+      outcome['successful'] = False
+      outcome['error'] = "I cannot recognize your speech"
+      print("Google Speech Recognition could not understand audio")
+    except sr.RequestError as e:
+      outcome['successful'] = False
+      outcome['error'] = "I cannot contact the API"
+      print(f"Cannot request results from Google Speech Recognition Service; {e}")
+    # try:  # <-- recognize speech w/ Sphinx
+    #   raw_word_list = r.recognize_sphinx(audio).lower().split(" ")
+    # except sr.UnknownValueError:
+    #   print("Sphinx could not understand audio")
+    # except sr.RequestError as e:
+    #   print(f"Could not request results from Sphinx; {e}")
+    return outcome
+
+  def get_from_speech(self):
+    while True:
+      game_speak("Speak naturally (and clearly) for up to 30 seconds.")
+      outcome = self.eavesdrop()
+      words = outcome['words']
+      if words:
+        game_speak("Alright, you've said enough. Let the game begin.")
+        break
+      elif "speech" in str(outcome['error']):
+        game_speak(f"{outcome['error']}. Don't be shy. Please speak up and try again.")
+        continue
+      else:
+        game_speak(f"{outcome['error']}. Please return to the main menu and select a different game mode.")
+        return None
+    return words
 
   def get_word(self):  # <-- should this be a classmethod?
     if self.source == "library":
-      # words = self.from_dictionary()
+      # words = self.get_from_dictionary()
       None
     elif self.source == "speech":
-      # words = self.from_speech()
-      None
+      words = self.get_from_speech()
     else:
       words = ["sandbox","resurrection","divergent","establishment","ridiculous","collection","experimentation",]
     self.word = random.choice(words).lower()
@@ -174,7 +226,7 @@ speech = Mode(
   "speech",)
 
 # Game Modes
-modes = [standard,timed,speech]
+modes = [standard, timed, speech]
 
 def get_mode(modes):
   title = "game modes"
@@ -190,6 +242,17 @@ def get_mode(modes):
 #========================================
 # GAMEPLAY CONFIGURATION
 #========================================
+
+def game_speak(text):
+  engine = pyttsx3.init()
+  engine.say(text)
+  engine.runAndWait()
+
+def communicate(bool, func1, func2, text):
+  if bool:
+    func1(text)
+  else:
+    func2(text)
 
 class Guess():
   def __init__(self, value:str="", BODY=BODY):
@@ -271,8 +334,11 @@ class Game:
     self._mystery = mode.word
     self._mystery_chars = mode.chars
     self._blanks = mode.blanks
-    print(f"The mystery word contains {len(self._mystery)} letters.")
-    print()
+    communicate(
+      self._source == "speech", 
+      game_speak, 
+      print, 
+      f"The mystery word contains {len(self._mystery)} letters.")
 
   @staticmethod
   def praise():
@@ -281,10 +347,11 @@ class Game:
 
   @staticmethod
   def taunt():
-    taunt = ["Tough luck.","You can do better.","You're joking, right?!","Aww... so close."]
+    taunt = ["Tough luck.","Bollocks, you can do better.","Are you serious?!","Aww... so close."]
     return random.choice(taunt)
 
   def play(self):
+    does_game_speak = self._source == "speech"
     g = Guess()
     while len(g.misses) < self._max_errors and len(g.hits) < len(self._mystery_chars):
       isRepeated = True
@@ -293,25 +360,25 @@ class Game:
         isRepeated = not g.is_unique
       if len(g.value) == 1 and g.is_in_word(self._mystery):
         g.hits.append(g.value)
-        print(self.praise())
+        communicate(does_game_speak, game_speak, print, self.praise())
       elif len(g.value) == len(self._mystery) and g.is_word(self._mystery):
         g.hits.clear()
         g.hits.extend([char for char in g.value])
-        print(self.praise())
+        communicate(does_game_speak, game_speak, print, self.praise())
       else:
         g.misses.append(g.value)
-        print(self.taunt())
+        communicate(does_game_speak, game_speak, print, self.taunt())
       print()
       h_string = g.hit_string(self._mystery, self._blanks)
       m_string = g.miss_string()
       g.show_board(h_string,m_string)
       print()
       print()
-    print(f"The correct word was `{self._mystery.upper()}`.")
-    if len(g.hits) == len(self._mystery):
-      print("Congratulations. You won the game!")
+    communicate(does_game_speak, game_speak, print, f"The correct word was `{self._mystery.upper()}`.")
+    if len(set(g.hits)) == len(set([char for char in self._mystery])):
+      communicate(does_game_speak, game_speak, print, "Congratulations. You won the game!")
     if len(g.misses) == self._max_errors:
-      print("Whomp whomp. You lose! Better luck next time.")
+      communicate(does_game_speak, game_speak, print, "Whomp whomp. You lose! Better luck next time.")
 
 
 #========================================
@@ -363,24 +430,5 @@ def hangman():
   print("Thanks for using the app!")
 
 
-
 if __name__ == '__main__':
   hangman()
-
-
-
-# Display Corpse
-def display_corpse():
-  print(rf"""
-      _____[]
-      I    ||
-      I    ||
-    \ O /  ||
-     \|/   ||
-      |    ||
-     / \   ||
-    /   \  ||
-           ||
-           ||
-  [========[]
-  """)
