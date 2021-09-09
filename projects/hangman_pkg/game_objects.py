@@ -1,5 +1,6 @@
 import random
-import asyncio
+import datetime
+
 import pyttsx3
 import speech_recognition as sr
 
@@ -53,7 +54,6 @@ class Game:
     """
     A superclass for a game instance of Hangman
 
-
     Attribute(s)
     ------------
     is_victorious : bool
@@ -62,6 +62,8 @@ class Game:
 
     Class Variable(s)
     -----------------
+    history = list
+        A list of all instantiated game modes
     victories = dict
         A dictionary that maintains a tally
         for the number of wins per game mode
@@ -69,12 +71,15 @@ class Game:
     
     Method(s)
     ---------
-    * speak(text)
-    * communicate(bool, func1, func2, text)
-    * praise()
-    * taunt()
+    * speak
+    * communicate
+    * praise
+    * taunt
+    * save_results
+    * summary
 
     """
+    history = []
     victories = {}
 
     def __init__(self, is_victorious=False):
@@ -99,6 +104,9 @@ class Game:
     def taunt():
         taunt = ["Tough luck.","Bollocks, you can do better.","Are you serious?!","Aww... so close."]
         return random.choice(taunt)
+
+    def save_results(self, outcome_obj):
+        Game.history.append(outcome_obj)
 
     @classmethod
     def summary(cls):
@@ -161,6 +169,10 @@ class Mode(Game):
     * eavesdrop
     * get_from_speech
     * get_word
+    * grade_guess
+    * update_user
+    * results
+    * play
 
     """
     all_modes = []
@@ -191,7 +203,7 @@ class Mode(Game):
         return f"{self.__class__.__name__}({param_str})"
 
     def contact_local_dicitionary(self):
-        outcome = {  # <-- response object
+        response = {  # <-- response object
             'words': None,
             'successful': True,
             'error': None,
@@ -202,16 +214,16 @@ class Mode(Game):
                 filtered_list = [word for word in raw_list if (len(word) >= self.word_length 
                 and word[0].islower())]
         except:
-            outcome["successful"] = False
-            outcome["error"] = "I cannot reach the local system dictionary!"
+            response["successful"] = False
+            response["error"] = "I cannot reach the local system dictionary!"
         else:
-            outcome["words"] = filtered_list
+            response["words"] = filtered_list
         finally:
-            return outcome
+            return response
 
     def get_from_dictionary(self):
-        outcome = self.contact_local_dicitionary()
-        return outcome['words']
+        response = self.contact_local_dicitionary()
+        return response['words']
 
     def eavesdrop(self):
         """
@@ -224,44 +236,37 @@ class Mode(Game):
         r = sr.Recognizer()
         mic = sr.Microphone()
         with mic as source:  # <-- record audio from microphone
-            r.adjust_for_ambient_noise(source, 2)
+            r.adjust_for_ambient_noise(source, 0.5)
             audio = r.listen(source)
-
-        outcome = {  # <-- response object
+        response = {  # <-- response object
             'words': None,
             'successful': True,
             'error': None,
         }
         try:  # <-- recognize speech w/ Google Speech Recognition
             raw_word_list = r.recognize_google(audio).lower().split(" ")
-            outcome['words'] = list(filter(lambda word: len(word) >= self.word_length, raw_word_list))
+            response['words'] = list(filter(lambda word: len(word) >= self.word_length, raw_word_list))
         except sr.UnknownValueError:
-            outcome['successful'] = False
-            outcome['error'] = "I cannot recognize your speech"
-        except sr.RequestError as e:
-            outcome['successful'] = False
-            outcome['error'] = "I cannot contact the API"
-        # try:  # <-- recognize speech w/ Sphinx
-        #   raw_word_list = r.recognize_sphinx(audio).lower().split(" ")
-        # except sr.UnknownValueError:
-        #   print("Sphinx could not understand audio")
-        # except sr.RequestError as e:
-        #   print(f"Could not request results from Sphinx; {e}")
-        return outcome
+            response['successful'] = False
+            response['error'] = "I cannot recognize your speech"
+        except sr.RequestError:
+            response['successful'] = False
+            response['error'] = "I cannot contact the API"
+        return response
 
     def get_from_speech(self):
         while True:
             self.speak("Speak naturally and clearly for up to 30 seconds.")
-            outcome = self.eavesdrop()
-            words = outcome['words']
+            response = self.eavesdrop()
+            words = response['words']
             if words:
                 self.speak("Alright, you've said enough. Let the game begin.")
                 return words
-            elif "speech" in outcome['error']:
-                self.speak(f"{outcome['error']}. Don't be shy. Please speak up and try again.")
+            elif "speech" in str(response['error']):
+                self.speak(f"{response['error']}. Don't be shy. Please speak up and try again.")
                 continue
             else:
-                self.speak(f"{outcome['error']}. Please return to the main menu and select a different game mode.")
+                self.speak(f"{response['error']}. Please return to the main menu and select a different game mode.")
                 return None
 
     def get_word(self):
@@ -279,41 +284,69 @@ class Mode(Game):
         self._blanks = ["_" for _ in self._word]
         self.communicate(self.source == "speech", self.speak, print, f"The mystery word contains {len(self._word)} letters.")
 
-    def play(self):
-      if not self.name in Game.victories.keys():
-        Game.victories[self.name] = []
-      does_game_speak = self.source == "speech"
-      g = Guess()
-      while len(g.misses) < self.max_errors and len(g.hits) < len(self._word):
-        is_repeated = True
-        while is_repeated:
-          g.get_guess(self._word, does_game_speak)
-          is_repeated = not g.is_unique
-        if len(g.value) == 1 and g.is_in_word(self._word):
-          g.hits.append(g.value)
-          self.communicate(does_game_speak, self.speak, print, self.praise())
-        elif len(g.value) == len(self._word) and g.is_word(self._word):
-          g.hits.clear()
-          g.hits.extend([char for char in g.value])
-          self.communicate(does_game_speak, self.speak, print, self.praise())
+    def grade_guess(self, guess_obj):
+        guess_obj.attempts.append(guess_obj.value)
+        if len(guess_obj.value) == 1 and guess_obj.is_in_word(self._word):
+            guess_obj.hits.append(guess_obj.value)
+            return True
+        elif len(guess_obj.value) == len(self._word) and guess_obj.is_word(self._word):
+            guess_obj.hits.clear()
+            guess_obj.hits.extend([char for char in guess_obj.value])
+            return True
         else:
-          g.misses.append(g.value)
-          self.communicate(does_game_speak, self.speak, print, self.taunt())
-        print()
-        h_string = g.hit_string(self._word, self._blanks)
-        m_string = g.miss_string()
-        g.show_board(h_string, m_string)
-        print()
-        print()
-        if len(set(g.hits)) == len(set([char for char in self._word])) or len(g.misses) == self.max_errors:
-          break
-      self.communicate(does_game_speak, self.speak, print, f"The correct word was `{self._word.upper()}`.")
-      if len(set(g.hits)) == len(set([char for char in self._word])):
-        self.communicate(does_game_speak, self.speak, print, "Congratulations. You won the game!")
-        self.is_victorious = True
-      if len(g.misses) == self.max_errors:
-        self.communicate(does_game_speak, self.speak, print, "Whomp whomp. You lose! Better luck next time.")
-      Game.victories[self.name].append(self.is_victorious)
+            guess_obj.misses.append(guess_obj.value)
+            return False
+        
+    def update_user(self, guess_obj, correct_guess, is_speaking):
+        h_string = guess_obj.hit_string(self._word, self._blanks)
+        m_string = guess_obj.miss_string()
+        if correct_guess:
+            self.communicate(is_speaking, self.speak, print, self.praise())
+        else:
+            self.communicate(is_speaking, self.speak, print, self.taunt())
+        guess_obj.show_board(h_string, m_string)
+
+    def results(self, guess_obj):
+        does_game_speak = self.source == "speech"
+        self.communicate(does_game_speak, self.speak, print, f"The correct word was `{self._word.upper()}`.")
+        if self.is_victorious:
+            self.communicate(does_game_speak, self.speak, print, "Congratulations. You won the game!")
+        else:
+            self.communicate(does_game_speak, self.speak, print, "Whomp whomp. You lose! Better luck next time.")
+        self.save_results(Outcome(self, guess_obj))
+
+    def play(self):
+        does_game_speak = self.source == "speech"
+        g = Guess()
+        win_clause = False
+        loss_clause = False
+        while not (win_clause or loss_clause):
+            # Obtain and evaluate input from user
+            while True:  
+                if does_game_speak:
+                    g.ask_guess(self._word)
+                else:
+                    g.get_guess(self._word)
+                if g.is_unique:
+                    break
+            is_correct = self.grade_guess(g)
+            self.update_user(g, is_correct, does_game_speak)
+            print()
+            print()
+
+            # Conditions to end game
+            win_clause = len(set(g.hits)) == len(set([char for char in self._word]))
+            loss_clause = len(g.misses) == self.max_errors
+            if win_clause:
+                self.is_victorious = True
+                break
+            elif loss_clause:
+                self.is_victorious = False
+                break
+            else:
+                continue
+        self.results(g)
+        return g
 
 # `Mode` instances
 standard = Mode(
@@ -337,161 +370,221 @@ speech = Mode(
 
 
 class Guess():
-  """
-  A class that represents a user's guesses
-  of the mystery word generated by an
-  instance of the 'Mode' class
-  
-  Attribute(s)
-  ------------
-  value : str
-      The value of a user's current guess. It
-      may be either a single character or a 
-      word whose length is exactly equal to that
-      of the mystery word
-  hits : list
-      A list of all distinct letters contained
-      within the mystery word that are guessed
-      correctly by the user. The list may also include the actual mystery word.
-  misses : list
-      A list of all distinct letters that are
-      not contained within the mystery word that are guessed by the user. The list may also include 
-      whole words that are equal in length to
-      the mystery word.
-  
-  Class Variable(s)
-  -----------------
-  BODY = tuple
-      A container for the components of the 
-      'hangman' graphic that is displayed to
-      a user in the command line
-  
-  Property
-  ---------
-  * is_unique
+    """
+    A class that represents a user's guesses
+    of the mystery word generated by an
+    instance of the 'Mode' class
 
-  Method(s)
-  ---------
-  * get_guess
-  * is_in_word
-  * is_word
-  * hit_string
-  * miss_string
-  * show_board
+    Attribute(s)
+    ------------
+    value : str
+        The value of a user's current guess. It
+        may be either a single character or a 
+        word whose length is exactly equal to 
+        that of the mystery word
+    attempts : list
+        A list of all attempts made by the user 
+        to guess the mystery word
+    hits : list
+        A list of all distinct letters contained
+        within the mystery word that are guessed
+        correctly by the user. The list may also 
+        include the actual mystery word.
+    misses : list
+        A list of all distinct letters that are
+        not contained within the mystery word that 
+        are guessed by the user. The list may also 
+        include whole words that are equal in 
+        length to the mystery word.
 
-  """
-  BODY = (
-  [r'     ',r'     ',r'     ',r'     ',r'     '],
-  [r'  O  ',r'     ',r'     ',r'     ',r'     '],
-  [r'  O  ',r'  |  ',r'  |  ',r'     ',r'     '],
-  [r'\ O  ',r' \|  ',r'  |  ',r'     ',r'     '],
-  [r'\ O /',r' \|/ ',r'  |  ',r'     ',r'     '],
-  [r'\ O /',r' \|/ ',r'  |  ',r' /   ',r'/    '],
-  [r'\ O /',r' \|/ ',r'  |  ',r' / \ ','/   \\'])
+    Class Variable(s)
+    -----------------
+    BODY = tuple
+        A container for the components of the 
+        'hangman' graphic that is displayed to
+        a user in the command line
 
-  def __init__(self, value:str=""):
-    self.value = value
-    self.hits = []
-    self.misses = []
+    Property
+    ---------
+    * is_unique
 
-  def __str__(self):
-    return self.value
-  
-  def __repr__(self):
-    return f"Guess(value='{self.value}')"
+    Method(s)
+    ---------
+    * get_guess
+    * is_in_word
+    * is_word
+    * hit_string
+    * miss_string
+    * show_board
 
-  def is_valid(self, target):
-    return str(self.value).isalpha() and (len(self.value) == 1 or len(self.value) == len(target))
+    """
+    BODY = (
+    [r'     ',r'     ',r'     ',r'     ',r'     '],
+    [r'  O  ',r'     ',r'     ',r'     ',r'     '],
+    [r'  O  ',r'  |  ',r'  |  ',r'     ',r'     '],
+    [r'\ O  ',r' \|  ',r'  |  ',r'     ',r'     '],
+    [r'\ O /',r' \|/ ',r'  |  ',r'     ',r'     '],
+    [r'\ O /',r' \|/ ',r'  |  ',r' /   ',r'/    '],
+    [r'\ O /',r' \|/ ',r'  |  ',r' / \ ','/   \\'])
 
-  @property
-  def is_unique(self):
-    if self.value in self.misses or self.value in self.hits:
-      print("You already used this guess.")
-    return not(self.value in self.misses or self.value in self.hits)
+    def __init__(self, value:str=""):
+        self.value = value
+        self.attempts = []
+        self.hits = []
+        self.misses = []
 
-  @staticmethod
-  def speak(text):
-      engine = pyttsx3.init()
-      engine.say(text)
-      engine.runAndWait()
+    def __str__(self):
+        return self.value
 
-  def listen(self, *args):
-    target = args[0] if args else None
-    r = sr.Recognizer()
-    mic = sr.Microphone()
-    with mic as source:  # <-- record audio from microphone
-        r.adjust_for_ambient_noise(source, 0.5)
-        audio = r.listen(source)
-    outcome = None
-    try:  # <-- recognize speech w/ Google Speech Recognition
-        outcome = r.recognize_google(audio).lower().split(" ")[0]
-    except sr.UnknownValueError:
-        self.speak("I cannot recognize your speech.")
-        return outcome
-    except sr.RequestError as e:
-        self.speak("I cannot contact the API.")
-        return outcome
-    else:
-        if outcome == target:
-          self.speak(f"Did you say {outcome}? Say 'yes' or 'no' to confirm.")
-          confirmation = self.listen("yes")
-        return outcome if (outcome == target and confirmation == "yes") else outcome[0]
+    def __repr__(self):
+        param_str = ", ".join(f"{k}='{v}'" for k,v in vars(self).items())
+        return f"{self.__class__.__name__}({param_str})"
 
-  def get_guess(self, target, *args):
-    is_speaking = args[0] if args else None
-    base_prompt = f"{'Say' if is_speaking else 'Enter'} a single letter in the target word, or {'say' if is_speaking else 'enter'} the entire word itself: "
-    alt_prompt = "It would seem that I may have difficulty understanding you clearly. As an alternative, please state a word from the phonetic alphabet and I will extract the first letter of the word I hear as your guess."
-    valid = False
-    err_count = 0
-    while not valid:
-      if is_speaking:
-        self.speak(base_prompt if err_count == 0 else alt_prompt)
-        # if err_count == 0:
-        #   self.speak(base_prompt)
-        # else:
-        #   self.speak(alt_prompt)
-        self.value = self.listen(target)
-        print(str(self.value)) # debugging
-        if self.value == None:
-          err_count += 1
-          continue
-      else:
-        self.value = input(base_prompt).lower()
-      valid = self.is_valid(target) and self.is_unique
-    return self.value.lower()
+    def is_valid(self, target):
+        return str(self.value).isalpha() and (len(self.value) == 1 or len(self.value) == len(target))
 
-  def is_in_word(self, word):
-    return word.find(self.value) != -1
+    @property
+    def is_unique(self):
+        if self.value in self.misses or self.value in self.hits:
+            print("You already used this guess.")
+        return not(self.value in self.misses or self.value in self.hits)
 
-  def is_word(self, word):
-    return self.value == word
+    @staticmethod
+    def speak(text):
+        engine = pyttsx3.init()
+        engine.say(text)
+        engine.runAndWait()
 
-  def hit_string(self, target, arr):
-    for idx in range(len(target)):
-      if len(self.value) == 1 and self.value == target[idx]:
-        arr[idx] = self.value.upper()
-      if self.value == target:
-        arr = [char.upper() for char in self.value]
-    return " ".join(arr)
+    def listen(self, *args):
+        target = args[0] if args else None
+        r = sr.Recognizer()
+        mic = sr.Microphone()
+        with mic as source:  # <-- record audio from microphone
+            r.adjust_for_ambient_noise(source, 0.5)
+            audio = r.listen(source)
+        response = None
+        try:  # <-- recognize speech w/ Google Speech Recognition
+            response = r.recognize_google(audio).lower().split(" ")[0]
+        except sr.UnknownValueError:
+            self.speak("I cannot recognize your speech.")
+            return response
+        except sr.RequestError:
+            self.speak("I cannot contact the API.")
+            return response
+        else:
+            if response == target:  # <-- prompt user to confirm guess if it hears target word
+                self.speak(f"Did you say {response}? Say 'yes' or 'no' to confirm.")
+                confirmation = self.listen("yes")
+            return response if (response == target and confirmation == "yes") else response[0]
 
-  def miss_string(self):
-    return ", ".join(self.misses).upper()
+    def get_guess(self, target):
+        base_prompt = "Enter a single letter in the target word, or enter the entire word itself: "
+        while True:
+            self.value = input(base_prompt).lower()
+            if self.is_valid(target):
+                return self.value.lower()
 
-  def show_board(self, h_string, m_string):
-    err = len(self.misses)
-    placeholder = [
-      f"{'_'*5}[]".rjust(11),
-      f"{'I'.center(9)}{'||'.ljust(6)}Word:   {h_string}",
-      f"{'I'.center(9)}{'||'.ljust(6)}",
-      f"{self.BODY[err][0].center(9)}{'||'.ljust(6)}",
-      f"{self.BODY[err][1].center(9)}{'||'.ljust(6)}Guess:  {self.value.upper()}",
-      f"{self.BODY[err][2].center(9)}{'||'.ljust(6)}",
-      f"{self.BODY[err][3].center(9)}{'||'.ljust(6)}",
-      f"{self.BODY[err][4].center(9)}{'||'.ljust(6)}Misses: {m_string}",
-      f"{' '*9}{'||'.ljust(6)}",
-      f"{' '*9}{'||'.ljust(6)}",
-      f"[{'='*8}[]",
-    ]
-    for i in placeholder:
-      print(i)
+    def ask_guess(self, target):
+        base_prompt = "Say a single letter in the target word, or say the entire word itself."
+        alt_prompt = "It would seem that I may have difficulty understanding you clearly. As an alternative, please state a word from the phonetic alphabet and I will extract the first letter of the word I hear as your guess."
+        err_count = 0
+        while True:
+            self.speak(base_prompt if err_count == 0 else alt_prompt)
+            self.value = self.listen(target)
+            if self.value == None:
+                err_count += 1
+                continue
+            else:
+                return self.value.lower()
+
+    def is_in_word(self, word):
+        return word.find(self.value) != -1
+
+    def is_word(self, word):
+        return self.value == word
+
+    def hit_string(self, target, arr):
+        for idx in range(len(target)):
+            if len(self.value) == 1 and self.value == target[idx]:
+                arr[idx] = self.value.upper()
+            if self.value == target:
+                arr = [char.upper() for char in self.value]
+        return " ".join(arr)
+
+    def miss_string(self):
+        return ", ".join(self.misses).upper()
+
+    def show_board(self, h_string, m_string):
+        err = len(self.misses)
+        placeholder = [
+            f"{'_'*5}[]".rjust(11),
+            f"{'I'.center(9)}{'||'.ljust(6)}Word:   {h_string}",
+            f"{'I'.center(9)}{'||'.ljust(6)}",
+            f"{self.BODY[err][0].center(9)}{'||'.ljust(6)}",
+            f"{self.BODY[err][1].center(9)}{'||'.ljust(6)}Guess:  {self.value.upper()}",
+            f"{self.BODY[err][2].center(9)}{'||'.ljust(6)}",
+            f"{self.BODY[err][3].center(9)}{'||'.ljust(6)}",
+            f"{self.BODY[err][4].center(9)}{'||'.ljust(6)}Misses: {m_string}",
+            f"{' '*9}{'||'.ljust(6)}",
+            f"{' '*9}{'||'.ljust(6)}",
+            f"[{'='*8}[]",
+        ]
+        for i in placeholder:
+            print(i)
+
+
+class Outcome():
+    """
+    A class that represents the results
+    for a game instance of 'Hangman'
+
+    Attribute(s)
+    ------------
+    timestamp : datetime
+        A timestamp denoting when the game ended
+    is_victorious : bool
+        Indicates whether or not a player
+        won an instance of a game mode
+    game_mode : str
+        The name of the game mode instance
+    mystery_word : str
+        The target guess word for a game instance
+    tries : int
+        The total number of unique guesses made 
+        by a user during a game instance
+    guesses : list
+        A list of all attempts made by the user 
+        to guess the mystery word
+    hits : list
+        A list of all distinct letters contained
+        within the mystery word that are guessed
+        correctly by the user. The list may also 
+        include the actual mystery word.
+    misses : list
+        A list of all distinct letters that are
+        not contained within the mystery word that 
+        are guessed by the user. The list may also 
+        include whole words that are equal in 
+        length to the mystery word.
+    """
+    def __init__(self, mode_obj, guess_obj):
+        self.timestamp = datetime.datetime.now()
+        self.is_victorious = mode_obj.is_victorious
+        self.game_mode = mode_obj.name
+        self.mystery_word = mode_obj._word
+        self.guesses = guess_obj.attempts
+        self.tries = len(self.guesses)
+        self.hits = guess_obj.hits
+        self.misses = guess_obj.misses
+
+        if not self.game_mode in Game.victories.keys():
+            Game.victories[self.game_mode] = []
+        Game.victories[self.game_mode].append(self.is_victorious)
+
+    def __str__(self):
+        return f"{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')} | Victorious?: {str(self.is_victorious).ljust(5)} | Game Mode: {str(self.game_mode).title()}"
+
+    def __repr__(self):
+        param_str = ", ".join(f"{k}='{v}'" for k,v in vars(self).items())
+        return f"{self.__class__.__name__}({param_str})"
 
