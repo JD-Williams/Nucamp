@@ -6,6 +6,8 @@ from textwrap import fill, wrap
 import time
 import copy
 
+import threading
+
 
 #========================================
 # MENU CONFIGURATION
@@ -20,7 +22,11 @@ def start_game():
     mode = get_mode()
     print()
     mode.get_word()
-    mode.play()
+    if mode.has_timer:
+        guess_obj = mode.timed_play()
+    else:
+        guess_obj = mode.play()
+    mode.results(guess_obj)
     print()
     Game.summary()
     time.sleep(10)
@@ -36,7 +42,7 @@ def show_rules():
         'game mode':f"{mode.name.upper()} -- {mode.label.title()}",
         'objective':fill(mode.objective, width=width),
         'gameplay':fill("The mystery word is depicted by a row of dashes, representing each letter of the word. Guess a letter that occurs in the mystery word. If it is correct, all occurences will be displayed. If it is incorrect, a body part will appear in the diagram. The game is won by guessing all correct letters in the mystery word before the diagram is complete.", width=width),
-        'parameters':f"Word Source: {mode.source} | Timed?: {mode.has_timer} | Max Errors: {mode.max_errors}"
+        'parameters':f"Word Source: {mode.source.title() if mode.source else 'Default'} | Timed?: {mode.has_timer} | Max Errors: {mode.max_errors}"
     }
     for k,v in rules.items():
         print(f"{k.title()}:")
@@ -50,9 +56,9 @@ def end_app():
     sys.exit(0)
 
 # `Option` instances
-start = Option("start", "Start a New Game", start_game)
-rules = Option("rules", "Show the Rules", show_rules)
-end = Option("end", "End the Application", end_app)
+start = Option(name="start", label="Start a New Game", action=start_game)
+rules = Option(name="rules", label="Show the Rules", action=show_rules)
+end = Option(name="end", label="End the Application", action=end_app)
 
 def get_mode():
     title = "game modes"

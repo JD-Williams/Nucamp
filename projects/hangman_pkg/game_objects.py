@@ -1,5 +1,7 @@
 import random
+import time
 import datetime
+import threading
 
 import pyttsx3
 import speech_recognition as sr
@@ -56,9 +58,18 @@ class Game:
 
     Attribute(s)
     ------------
+    active_game : threading.Event
+        An event object that manages
+        state of gameplay
     is_victorious : bool
         Indicates whether or not a player
         won an instance of a game
+    time_limit : int
+        The maximum time allotted for
+        a timed game (in seconds)
+    duration = float
+        The duration of the gamplay
+        (measured in seconds)
 
     Class Variable(s)
     -----------------
@@ -75,15 +86,21 @@ class Game:
     * communicate
     * praise
     * taunt
+    * time_label
     * save_results
+    * end_game
+    * create_timer
     * summary
 
     """
     history = []
     victories = {}
 
-    def __init__(self, is_victorious=False):
+    def __init__(self, active_game=None, is_victorious=None, time_limit=300, duration=0):
+        self.active_game = threading.Event()
         self.is_victorious = is_victorious
+        self.time_limit = time_limit
+        self.duration = duration
 
     @staticmethod
     def speak(text):
@@ -105,8 +122,20 @@ class Game:
         taunt = ["Tough luck.","Bollocks, you can do better.","Are you serious?!","Aww... so close."]
         return random.choice(taunt)
 
+    @staticmethod
+    def time_label(interval):
+        mins, secs = divmod(interval, 60)
+        return f"{mins:.0f} minutes and {secs:.0f} seconds"
+
     def save_results(self, outcome_obj):
         Game.history.append(outcome_obj)
+    
+    def end_game(self):
+        print("Time's Up!")
+        self.active_game.clear()
+
+    def create_timer(self):
+        return threading.Timer(interval=self.time_limit, function=self.end_game)
 
     @classmethod
     def summary(cls):
@@ -126,9 +155,18 @@ class Mode(Game):
 
     Attribute(s)
     ------------
+    active_game : threading.Event
+        An event object that manages
+        state of gameplay
     is_victorious : bool
         Indicates whether or not a player
         won an instance of a game mode
+    time_limit : int
+        The maximum time allotted for
+        a timed game (in seconds)
+    duration = float
+        The duration of the gamplay
+        (measured in seconds)
     name : str
         The internal name assigned to a game mode
     label : str
@@ -138,7 +176,7 @@ class Mode(Game):
         A brief description of the objective for the selected game mode
     source : str
         The word source for a selected game mode
-    word_length : int
+    min_word_length : int
         The minimum length for a mystery word
     has_timer : bool
         Indicates whether or not an instance
@@ -171,23 +209,27 @@ class Mode(Game):
     * get_word
     * grade_guess
     * update_user
-    * results
     * play
+    * results
 
     """
     all_modes = []
 
     def __init__(
-        self, is_victorious, 
-        name, label, 
-        objective=None, source=None, word_length=8,has_timer:bool=False, max_errors:int=6):
-        super().__init__(is_victorious)
-        self.is_victorious =is_victorious
+        self, active_game=None, is_victorious=False,
+        time_limit=300, duration=0, 
+        name=None, label=None, 
+        objective=None, source=None, min_word_length=8, has_timer=False, max_errors=6):
+        super().__init__(active_game, is_victorious, time_limit, duration)
+        self.active_game = threading.Event()
+        self.is_victorious = is_victorious
+        self.time_limit = time_limit
+        self.duration = duration
         self.name = name
         self.label = label
         self.objective = objective
         self.source = source
-        self.word_length = word_length
+        self.min_word_length = min_word_length
         self.has_timer = has_timer
         self.max_errors = max_errors
         self._word = ""
@@ -211,7 +253,7 @@ class Mode(Game):
         try:
             with open("/usr/share/dict/words", "r") as f:
                 raw_list = f.read().split("\n")
-                filtered_list = [word for word in raw_list if (len(word) >= self.word_length 
+                filtered_list = [word for word in raw_list if (len(word) >= self.min_word_length 
                 and word[0].islower())]
         except:
             response["successful"] = False
@@ -245,7 +287,7 @@ class Mode(Game):
         }
         try:  # <-- recognize speech w/ Google Speech Recognition
             raw_word_list = r.recognize_google(audio).lower().split(" ")
-            response['words'] = list(filter(lambda word: len(word) >= self.word_length, raw_word_list))
+            response['words'] = list(filter(lambda word: len(word) >= self.min_word_length, raw_word_list))
         except sr.UnknownValueError:
             response['successful'] = False
             response['error'] = "I cannot recognize your speech"
@@ -306,21 +348,14 @@ class Mode(Game):
             self.communicate(is_speaking, self.speak, print, self.taunt())
         guess_obj.show_board(h_string, m_string)
 
-    def results(self, guess_obj):
-        does_game_speak = self.source == "speech"
-        self.communicate(does_game_speak, self.speak, print, f"The correct word was `{self._word.upper()}`.")
-        if self.is_victorious:
-            self.communicate(does_game_speak, self.speak, print, "Congratulations. You won the game!")
-        else:
-            self.communicate(does_game_speak, self.speak, print, "Whomp whomp. You lose! Better luck next time.")
-        self.save_results(Outcome(self, guess_obj))
-
     def play(self):
-        does_game_speak = self.source == "speech"
+        start_time = time.time()
         g = Guess()
+        does_game_speak = self.source == "speech"
         win_clause = False
         loss_clause = False
-        while not (win_clause or loss_clause):
+        self.active_game.set()
+        while self.active_game.is_set() and not (win_clause or loss_clause):
             # Obtain and evaluate input from user
             while True:  
                 if does_game_speak:
@@ -345,28 +380,56 @@ class Mode(Game):
                 break
             else:
                 continue
-        self.results(g)
+        self.duration = time.time() - start_time
         return g
+
+    def timed_play(self):
+        does_game_speak = self.source == "speech"
+        announce=f"You will have {self.time_label(self.time_limit)} to complete the game.\nGood luck.\n"
+        t = self.create_timer()
+        self.communicate(does_game_speak, self.speak, print, announce)
+        t.start()
+        guess_obj = self.play()
+        if self.duration < self.time_limit:
+            t.cancel()
+        else:
+            self.duration = self.time_limit
+        return guess_obj
+
+    def results(self, guess_obj):
+        announce = dict(
+            word=f"The correct word was `{self._word.upper()}`.",
+            win=f"Congratulations. {'You finished...JUST IN TIME!!!' if self.has_timer else 'You won the game!'}\n",
+            lose=f"You ran out of time! Tough luck.\n" if self.duration == self.time_limit else "Whomp whomp. You lose! Better luck next time.\n",
+            duration=f"Game Duration: {self.time_label(self.duration)}",
+        )
+        does_game_speak = self.source == "speech"
+        self.communicate(does_game_speak, self.speak, print, announce['word'])
+        if self.is_victorious:
+            self.communicate(does_game_speak, self.speak, print, announce['win'])
+        else:
+            self.communicate(does_game_speak, self.speak, print, announce['lose'])
+        self.communicate(does_game_speak, self.speak, print, announce['duration'])
+        self.save_results(Outcome(self, guess_obj))
+
+
 
 # `Mode` instances
 standard = Mode(
-  False,
-  "standard",
-  "traditional game",
-  "Determine the mystery word before reaching the maximum number of errors.",
-  "dictionary")
+  name = "standard",
+  label = "traditional game",
+  objective = "Determine the mystery word before reaching the maximum number of errors.",
+  source = "dictionary")
 timed = Mode(
-  False,
-  "timed",
-  "just in time",
-  "Determine the mystery word before the time limit expires.",
+  name = "timed",
+  label = "just in time",
+  objective = "Determine the mystery word before the time limit expires.",
   has_timer=True,)
 speech = Mode(
-  False,
-  "speech",
-  "listen up!",
-  "Determine a mystery word that is randomly chosen from an audio clip of the user's speech.",
-  "speech",)
+  name = "speech",
+  label = "listen up!",
+  objective = "Determine a mystery word that is randomly chosen from an audio clip of the user's speech.",
+  source = "speech",)
 
 
 class Guess():
