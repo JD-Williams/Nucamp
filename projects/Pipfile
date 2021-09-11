@@ -7,7 +7,6 @@ name = "pypi"
 speechrecognition = "*"
 pyttsx3 = "*"
 pillow = "*"
-pydictionary = "*"
 pyaudio = "*"
 
 [dev-packages]
