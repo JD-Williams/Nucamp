@@ -4,6 +4,7 @@
 
 # Section title for CLI
 def show_title(text):
+    """Displays the text string with a variable-length border"""
     length = len(text) + 2
     title = [f"/*{'='*length}",f"| {text.upper()} |",f"{'='*length}*/"]
     for i in title:
@@ -11,6 +12,7 @@ def show_title(text):
 
 # Title screen for CLI
 def title_screen():
+    """Displays a graphic in the command line"""
     CORPSE = (
       r'\ O /',
       r' \|/ ',
@@ -35,33 +37,90 @@ def title_screen():
 # HANDLER & VALIDATION FUNCTIONS
 #========================================
 
-def is_obj_valid(selection, obj_array):
-    if selection.isdigit() and int(selection)-1 in range(len(obj_array)):
-        idx = int(selection)-1
-        return True, obj_array[idx]
-    elif selection in [str(obj.name).lower() for obj in obj_array]:
-        for obj in obj_array:
-            if selection == str(obj.name).lower():
-                return True, obj
-    else:
-        print(f"The selected option ({selection}) is invalid. Try again.")
-        return False, None
+def is_option_valid(obj_id, obj_list):
+    """Validates that a user's selection is in a list.
 
-def get_selection(obj_array):
+    Parameters
+    ----------
+    obj_id : str
+        A string id for a class instance.
+    obj_list : list
+        A list of instances for the same class.
+
+    Returns
+    -------
+    bool
+        True if successful, False otherwise.
+    """
+    err_msg = f"The selected option ({obj_id}) is invalid. Try again."
+    try:
+        int(obj_id)
+    except ValueError:
+        print(err_msg)
+        return False
+    else:
+        if int(obj_id)-1 in range(len(obj_list)):
+            return True
+        else:
+            print(err_msg)
+            return False
+
+def get_selection(obj_list):
+    """Prompts user for input and returns the corresponding class instance.
+
+    Parameters
+    ----------
+    obj_list : list
+        A list of instances for the same class.
+
+    Returns
+    -------
+    obj
+        An instance of a class.
+    """
     is_valid = False
     while not is_valid:
-        selection = input("Select one of the options above: ").lower()
-        is_valid, obj = is_obj_valid(selection, obj_array)
+        obj_id = input("Enter a number for the desired option: ").lower()
+        is_valid = is_option_valid(obj_id, obj_list)
+    obj_id = int(obj_id)
+    obj = obj_list[obj_id-1]
     return obj
 
-def show_options(obj_array):
-    for obj in obj_array:
-        print(f"{obj_array.index(obj)+1} -- {str(obj.name).upper()} ({str(obj.label).title()})")
+def show_options(obj_list):
+    """Display the name of each object in a list.
+    
+    Parameters
+    ----------
+    obj_list : list
+        A list of instances for the same class.
+
+    Returns
+    -------
+    None
+    """
+    for idx, obj in enumerate(obj_list):
+        print(f"{idx+1} -- {str(obj.name).upper()} ({str(obj.label).title()})")
 
 def get_menu_options(menu):
-    show_options(menu)
-    selection = get_selection(menu)
-    print()
-    print(f"You have chosen to `{selection.label}`")
-    return selection
+    """Prompts user to select a menu option from a list, and returns the corresponding 'Option' object.
 
+    Parameters
+    ----------
+    menu : list
+        A list of instances for the same class.
+
+    Returns
+    -------
+    obj
+        An instance of a class.
+    """
+    show_options(menu)
+    obj = get_selection(menu)
+    print()
+    print(f"You have chosen to `{obj.label}`")
+    return obj
+
+
+
+if __name__ == '__main__':
+    pass

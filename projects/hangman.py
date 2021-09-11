@@ -2,11 +2,9 @@ from hangman_pkg.config import *
 from hangman_pkg.game_objects import Option, Game, Mode, Guess
 
 import sys
-from textwrap import fill, wrap
+from textwrap import fill
 import time
 import copy
-
-import threading
 
 
 #========================================
@@ -15,10 +13,7 @@ import threading
 
 # Callback Func: `START` (Menu Option = 1)
 def start_game():
-    """
-    Creates a new instance of a game
-    and initiates gameplay
-    """
+    """Creates a new instance of a game mode and initiates gameplay."""
     mode = get_mode()
     print()
     mode.get_word()
@@ -33,6 +28,7 @@ def start_game():
 
 # Callback Func: `RULES` (Menu Option = 2)
 def show_rules():
+    """Displays the rules for a selected game mode."""
     mode = get_mode()
     print()
     show_title("rules")
@@ -52,6 +48,7 @@ def show_rules():
 
 # Callback Func: `END` (Menu Option = 3)
 def end_app():
+    """Terminates the script."""
     print("I hope you enjoyed this game. Have a great day!")
     sys.exit(0)
 
@@ -61,6 +58,17 @@ rules = Option(name="rules", label="Show the Rules", action=show_rules)
 end = Option(name="end", label="End the Application", action=end_app)
 
 def get_mode():
+    """Prompts a user to select a game mode from a list, and return a copy of the selected 'Mode' object.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    new_mode : Mode()
+        A copy of the selected game mode instance.
+    """
     title = "game modes"
     show_title(title)
     print()
@@ -76,9 +84,12 @@ def get_mode():
 # MAIN APPLICATION
 #========================================
 
-def run_app():
+def main_menu():
     title_screen()
-    obj = get_menu_options(Option.menu)
+    return get_menu_options(Option.menu)
+
+def run_app():
+    obj = main_menu()
     print()
     obj.action()
     print()
