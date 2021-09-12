@@ -203,7 +203,7 @@ class Mode(Game):
     play()
         A method that initializes an untimed game instance. Returns a 'Guess' object.
     timed_play()
-        A method that initializes an timed game instance. Returns a 'Guess' object.
+        A method that initializes a timed game instance. Returns a 'Guess' object.
     results(guess_obj)
         A method that communicates the results of a game instance to the user.
     """
@@ -356,7 +356,22 @@ class Mode(Game):
     def get_word(self):
         """Randomly selects a word from a source specified by the game mode, or a list of default words."""
         DEFAULT_WORDS = [
-            "sandbox","resurrection","divergent","establishment","ridiculous","collection","experimentation",]
+            "resurrection", "osphresiology", "establishment","ridiculous","collection", "querimonious", "experimentation", "zealotry",
+            "international", "vastation", "gemelliparous", "kyriolexy",
+            "totalitarianism", "kaleidophone", "nephralgia",
+            "juxtaposition", "decalescence", "calorifacient",
+            "loquacious", "uniphonous", "abscissa",
+            "differentiation", "kettlestitch", "halitosis",
+            "logarithmic", "ultracrepidate", "biloquist",
+            "quadrennium", "gawdelpus", "acritochromacy",
+            "ethereal", "jactitation", "delaminate",
+            "zwitterion", "oppignorate", "whippletree",
+            "xenobiotic", "otorhinolaryngology", "eldritch",
+            "transient", "oligarchy", "naturalism",
+            "inconsequential", "grandisonant",
+            "reverberate","capricious", "hematology",
+            "whimsical", "xylography", "balatron",
+            "disenfranchise", "neomorphic", "wrackful",]
         if self.source == "dictionary":
             words = self._get_from_dictionary()
         elif self.source == "speech":
@@ -394,13 +409,11 @@ class Mode(Game):
             guess_obj.misses.append(guess_obj.value)
             return False
         
-    def _update_user(self, guess_obj, is_correct, is_speaking):
+    def _update_user(self, is_correct, is_speaking):
         """Communicates whether or not a user's guess was successful, and displays an updated game board to reflect the most recent attempt.
 
         Parameters
         ----------
-        guess_obj : Guess
-            An instance of the 'Guess' class.
         is_correct : bool
             Indicates whether or not the user's current guess is correct.
         is_speaking : bool
@@ -410,13 +423,10 @@ class Mode(Game):
         -------
         None
         """
-        h_string = guess_obj._hit_string(self._word, self._blanks)
-        m_string = guess_obj.miss_string()
         if is_correct:
             self._communicate(is_speaking, self.speak, print, self._praise())
         else:
             self._communicate(is_speaking, self.speak, print, self._taunt())
-        guess_obj.show_board(h_string, m_string)
 
     def play(self):
         """A method that initializes an untimed game instance. Returns a 'Guess' object."""
@@ -425,10 +435,15 @@ class Mode(Game):
         does_game_speak = self.source == "speech"
         win_clause = False
         loss_clause = False
+        for _ in range(2):
+            print()
+        g.show_board(
+            g._hit_string(self._word, self._blanks), g.miss_string())
         self.active_game.set()
         while self.active_game.is_set() and not (win_clause or loss_clause):
             # Obtain and evaluate input from user
-            while True:  
+            while True:
+                print()
                 if does_game_speak:
                     g._ask_guess(self._word)
                 else:
@@ -436,10 +451,13 @@ class Mode(Game):
                 if g._is_unique:
                     break
             if self.active_game.is_set():
+                print()
                 is_correct = self._grade_guess(g)
-                self._update_user(g, is_correct, does_game_speak)
-            print()
-            print()
+                self._update_user(is_correct, does_game_speak)
+                for _ in range(2):
+                    print()
+                g.show_board(
+                    g._hit_string(self._word, self._blanks), g.miss_string())
 
             # Conditions to end game
             win_clause = len(set(g.hits)) == len(set([char for char in self._word]))
@@ -487,6 +505,7 @@ class Mode(Game):
             lose=f"You ran out of time! Tough luck.\n" if self.duration == self.time_limit else "Whomp whomp. You lose! Better luck next time.\n",
             duration=f"Game Duration: {self._time_label(self.duration)}",
         )
+        print()
         does_game_speak = self.source == "speech"
         self._communicate(does_game_speak, self.speak, print, announce['word'])
         if self.is_victorious:

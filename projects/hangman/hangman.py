@@ -38,7 +38,7 @@ def show_rules():
         'game mode':f"{mode.name.upper()} -- {mode.label.title()}",
         'objective':fill(mode.objective, width=width),
         'gameplay':fill("The mystery word is depicted by a row of dashes, representing each letter of the word. Guess a letter that occurs in the mystery word. If it is correct, all occurences will be displayed. If it is incorrect, a body part will appear in the diagram. The game is won by guessing all correct letters in the mystery word before the diagram is complete.", width=width),
-        'parameters':f"Word Source: {mode.source.title() if mode.source else 'Default'} | Timed?: {mode.has_timer} | Max Errors: {mode.max_errors}"
+        'parameters':f"Word Source: {mode.source.title() if mode.source else 'Default'} | Timed?: {mode.has_timer} | Minimum Word Length: {mode.min_word_length}"
     }
     for k,v in rules.items():
         print(f"{k.title()}:")
@@ -49,7 +49,7 @@ def show_rules():
 # Callback Func: `END` (Menu Option = 3)
 def end_app():
     """Terminates the script."""
-    print("I hope you enjoyed this game. Have a great day!")
+    print("I hope you enjoyed this game. Have a great day!\n\n")
     sys.exit(0)
 
 # `Option` instances
@@ -85,6 +85,8 @@ def get_mode():
 #========================================
 
 def main_menu():
+    for _ in range(3):
+        print()
     title_screen()
     return get_menu_options(Option.menu)
 
@@ -101,7 +103,7 @@ def hangman():
     while action != end:
         action = run_app()
         print()
-    print("Thanks for using the app!")
+    print("Thanks for using the app!\n")
 
 
 
