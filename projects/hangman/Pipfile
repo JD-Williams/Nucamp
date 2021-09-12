@@ -4,10 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-speechrecognition = "*"
 pyttsx3 = "*"
-pillow = "*"
-pyaudio = "*"
+speechrecognition = "*"
 
 [dev-packages]
 
