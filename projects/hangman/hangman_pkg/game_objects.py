@@ -17,7 +17,7 @@ class Option:
     Attributes
     ----------
     name : str
-        The string identifer for an option.
+        The string identifier for an option.
     label : str
         The display name of an option.
     action : func
@@ -25,7 +25,7 @@ class Option:
 
     Class Variables
     ---------------
-    menu = list
+    menu : list
         A list of all instantiated 'Option' objects.
     """
     menu = []
@@ -71,9 +71,9 @@ class Game:
 
     Class Variables
     ---------------
-    history = list
+    history : list
         A list of instances for the 'Outcome' class.
-    victories = dict
+    victories : dict
         A dictionary that maintains a tally for the number of wins per game mode played during a session.
     """
     history = []
@@ -165,13 +165,13 @@ class Mode(Game):
     active_game : threading.Event
         An event object that manages the state of gameplay.
     is_victorious : bool, default = False
-        Indicates whether or not a player won a game instance.
+        Indicates whether a player won a game instance.
     time_limit : int, default = 180
         The maximum time (in seconds) allotted for a timed game.
     duration = float
         The duration of the gameplay measured in seconds.
     name : str, optional
-        The string identifer for a game mode.
+        The string identifier for a game mode.
     label : str, optional
         The display name of a game mode.
     objective : str
@@ -181,7 +181,7 @@ class Mode(Game):
     min_word_length : int, default = 8
         The minimum number of letters in a target word.
     has_timer : bool, default = False
-        Indicates whether or not the game mode is timed.
+        Indicates whether the game mode is timed.
     max_errors : int, default = 6
         The maximum number of errors a user is allowed to make before losing the game.
     word : str
@@ -193,7 +193,7 @@ class Mode(Game):
 
     Class Variables
     ---------------
-    all_modes = list
+    all_modes : list
         A list of all instantiated 'Mode' objects.
 
     Methods
@@ -549,7 +549,7 @@ class Guess():
 
     Class Variables
     ---------------
-    BODY = tuple
+    BODY : tuple
         The components of the 'Hangman' graphic displayed to a user.
     """
     BODY = (
@@ -754,9 +754,9 @@ class Outcome():
     timestamp : datetime
         A timestamp denoting when the game instance ended.
     is_victorious : bool
-        Indicates whether or not a player won the game instance.
+        Indicates whether a player won the game instance.
     game_mode : str
-        The string identifer for the game mode.
+        The string identifier for the game mode.
     target_word : str
         The target word for the game instance.
     tries : int
